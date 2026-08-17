@@ -65,7 +65,7 @@ bool    init_data(t_data *data, char **argv)
         data->scheduler = EDF;
     data->simulation_start = 0;
     data->coders_ready = false;
-    data->end = false;
+    data->end_of_simulation = false;
     data->coders = malloc(data->number_of_coders * sizeof(*data->coders));
     if (!data->coders)
         return 0;
@@ -74,6 +74,7 @@ bool    init_data(t_data *data, char **argv)
         return 0;
     init_coders(data);
     pthread_mutex_init(&data->write_mutex, NULL);
+    pthread_mutex_init(&data->end_mutex, NULL);
     return 1;
 }
 
