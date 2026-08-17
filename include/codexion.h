@@ -8,6 +8,7 @@
 #include <string.h> // strlen, strcmp ...
 #include <sys/time.h> // gettimeofday
 #include <stdbool.h> // bool
+#include <errno.h> // errors
 
 # define USAGE  "./codexion <number_of_coders> " \
                 "<time_to_burnout> " \
@@ -24,6 +25,8 @@ typedef struct s_dongle t_dongle;
 typedef struct s_coder t_coder;
 typedef struct s_data t_data;
 typedef struct s_monitor t_monitor;
+typedef struct s_heap_node t_heap_node;
+typedef struct s_heap t_heap;
 
 typedef enum e_scheduler
 {
@@ -48,12 +51,27 @@ struct s_data
     int         number_of_compiles_required;
     int         dongle_cooldown;
     bool        coders_ready;
-    bool        end;
+    bool        end_of_simulation;
     t_coder     *coders;
     t_dongle    *dongles;
     t_scheduler    scheduler;
+    t_mtx       end_mutex;
     t_mtx       write_mutex;
+    t_heap      *heap;
     long long   simulation_start;
+};
+
+
+struct s_heap_node
+{
+    t_coder     *coder;
+    long long   deadline;
+};
+
+struct s_heap
+{
+    t_heap_node *node;
+    int         size;
 };
 
 struct s_coder
@@ -66,6 +84,7 @@ struct s_coder
     t_dongle    *second_dongle;
     t_cond      cond;
     pthread_t   thread;
+
 };
 
 struct s_dongle
