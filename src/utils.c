@@ -13,3 +13,22 @@ long get_time(t_time time)
         return (tv.tv_usec);
     return 0;
 }
+
+void    ft_usleep(int to_sleep, t_coder *coder)
+{
+    struct timeval tv;
+    struct timespec ts;
+    int     rt;
+
+    gettimeofday(&tv, NULL);
+    ts.tv_sec = tv.tv_sec + ((tv.tv_usec + (to_sleep * 1000)) / 1000000);
+    ts.tv_nsec = ((tv.tv_usec + (to_sleep * 1000)) % 1000000) * 1000;
+    pthread_mutex_lock(&coder->data_all->end_mutex);
+    while (!coder->data_all->end_of_simulation)
+    {
+        rt = pthread_cond_timedwait(&coder->cond, &coder->data_all->end_mutex, &ts);
+        if (rt == ETIMEDOUT)
+            break;
+    }
+    pthread_mutex_unlock(&coder->data_all->end_mutex);
+}
