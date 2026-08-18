@@ -41,6 +41,18 @@ typedef enum e_time
     MICROSECOND
 }   t_time;
 
+typedef enum e_status
+{
+    COMPILING,
+    DEBUGGING,
+    REFACTORING,
+    TAKING_DONGLE,
+    WAITING_DONGLE,
+    BURNED_OUT
+}   t_status;
+
+
+
 struct s_data
 {
     int         number_of_coders;
@@ -50,14 +62,18 @@ struct s_data
     int         time_to_refactor;
     int         number_of_compiles_required;
     int         dongle_cooldown;
-    bool        coders_ready;
+    bool        ready;
     bool        end_of_simulation;
     t_coder     *coders;
     t_dongle    *dongles;
     t_scheduler    scheduler;
     t_mtx       end_mutex;
     t_mtx       write_mutex;
+    t_mtx       ready_mutex;
+    t_cond      ready_cond;
     t_heap      *heap;
+    pthread_t   monitor;
+    t_cond      monitor_cond;
     long long   simulation_start;
 };
 
@@ -70,37 +86,46 @@ struct s_heap_node
 
 struct s_heap
 {
+    t_mtx       mutex;
     t_heap_node *node;
     int         size;
 };
 
 struct s_coder
 {
+    int         heap_index;
     int         id;
     int         compile_count;
     long long   last_compile_time;
+    long long   arrival_time;
     t_data      *data_all;
     t_dongle    *first_dongle;
     t_dongle    *second_dongle;
     t_cond      cond;
     pthread_t   thread;
-
+    t_mtx       mutex;
+    t_status    status;
 };
 
 struct s_dongle
 {
     int         id;
+    bool        taken;
+    long long   last_release;
+    t_coder     *left;
+    t_coder     *right;
+    t_heap      *heap;
     t_mtx       mutex;
     t_cond      cond;
-};
-
-struct  s_monitor
-{
-    t_cond  cond;
 };
 
 bool    data_validator(int argc, char **argv);
 bool    init_data(t_data *data, char **argv);
 long    get_time(t_time time);
-
+bool    build_heap(t_data *data);
+void    ft_usleep(int to_sleep, t_coder *coder);
+void    dongle_cooldown(t_dongle *dongle, t_data *data);
+void    heapify(t_heap *arr, int i);
+void    output(t_coder *coder, t_status log);
+void    run_thread(t_data *data);
 #endif
