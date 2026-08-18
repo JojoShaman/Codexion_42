@@ -22,6 +22,7 @@ void    cleanup(t_data *data)
         free(data->heap);
     }
     pthread_mutex_destroy(&data->ready_mutex);
+    pthread_mutex_destroy(&data->another_mutex);
     pthread_mutex_destroy(&data->end_mutex);
     pthread_mutex_destroy(&data->write_mutex);
     pthread_cond_destroy(&data->monitor_cond);
