@@ -15,6 +15,8 @@ void    cleanup(t_data *data)
     }
     if (data->coders)
         free(data->coders);
+    if (data->dongles)
+        free(data->dongles);
     if (data->heap)
     {
         if (data->heap->node)
