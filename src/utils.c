@@ -32,3 +32,22 @@ void    ft_usleep(int to_sleep, t_coder *coder)
     }
     pthread_mutex_unlock(&coder->data_all->end_mutex);
 }
+
+void    dongle_cooldown(t_dongle *dongle, t_data *data)
+{
+    struct timeval tv;
+    struct timespec ts;
+    int     rt;
+    int     cooldown;
+
+    gettimeofday(&tv, NULL);
+    cooldown = data->dongle_cooldown - (get_time(MILLISECOND) - dongle->last_release);
+    ts.tv_sec = tv.tv_sec + ((tv.tv_usec + (cooldown * 1000)) / 1000000);
+    ts.tv_nsec = ((tv.tv_usec + (cooldown * 1000)) % 1000000) * 1000;
+    while (get_time(MILLISECOND) < dongle->last_release + data->dongle_cooldown)
+    {
+        rt = pthread_cond_timedwait(&dongle->cond, &dongle->mutex, &ts);
+        if (rt == ETIMEDOUT)
+            break;
+    }
+}
