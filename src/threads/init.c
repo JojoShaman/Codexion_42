@@ -1,4 +1,5 @@
 #include "../../include/codexion.h"
+#include <pthread.h>
 
 void    init_dongle(t_data *data)
 {
@@ -16,20 +17,22 @@ void    init_dongle(t_data *data)
 void    attribute_dongle(t_coder *coder, int position)
 {
     t_data  *data;
+    int     n;
 
     data = coder->data_all;
-    if (position % 2)
+    n = data->number_of_coders;
+    if (position % 2) // if odd pos, left dongle first
     {
-        coder->first_dongle = &data->dongles[(position + 1) %
-            data->number_of_coders];
+        coder->first_dongle = &data->dongles[(position + 1) % n];
         coder->second_dongle = &data->dongles[position];
     }
-    else
+    else // if even pos, right dongle first
     {
         coder->first_dongle = &data->dongles[position];
-        coder->second_dongle = &data->dongles[(position + 1) %
-            data->number_of_coders];
+        coder->second_dongle = &data->dongles[(position + 1) % n];
     }
+    data->dongles[position].left = &data->coders[position];
+    data->dongles[position].right = &data->coders[(position - 1 + n) % n];
 }
 
 void    init_coders(t_data *data)
@@ -42,10 +45,13 @@ void    init_coders(t_data *data)
     {
         coder = &data->coders[i];
         coder->id = i + 1;
+        coder->heap_index = i;
         coder->compile_count = 0;
         coder->last_compile_time = get_time(MILLISECOND);
         pthread_cond_init(&coder->cond, NULL);
+        pthread_mutex_init(&coder->mutex, NULL);
         coder->data_all = data;
+        coder->status = WAITING_DONGLE;
         attribute_dongle(coder, i);
     }
 }
@@ -63,8 +69,8 @@ bool    init_data(t_data *data, char **argv)
         data->scheduler = FIFO;
     else
         data->scheduler = EDF;
-    data->simulation_start = 0;
-    data->coders_ready = false;
+    data->simulation_start = get_time(MILLISECOND);
+    data->ready = false;
     data->end_of_simulation = false;
     data->coders = malloc(data->number_of_coders * sizeof(*data->coders));
     if (!data->coders)
@@ -73,8 +79,12 @@ bool    init_data(t_data *data, char **argv)
     if (!data->dongles)
         return 0;
     init_coders(data);
+    build_heap(data);
     pthread_mutex_init(&data->write_mutex, NULL);
     pthread_mutex_init(&data->end_mutex, NULL);
+    pthread_mutex_init(&data->ready_mutex, NULL);
+    pthread_cond_init(&data->ready_cond, NULL);
+    pthread_cond_init(&data->monitor_cond, NULL);
     return 1;
 }
 
