@@ -13,8 +13,11 @@ int     main(int argc, char **argv)
         return (1);
     }
     if (!init_data(data, argv))
+    {
         fprintf(stderr, "ERROR ALLOCATION");
+        return (1);
+    }
     run_thread(data);
-    free(data);
-    return 0;
+    cleanup(data);
+    return (0);
 }

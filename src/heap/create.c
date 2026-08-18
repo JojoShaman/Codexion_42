@@ -26,6 +26,7 @@ bool    build_heap(t_data *data)
     i = -1;
     if (!init_heap(data))
         return (false);
+    pthread_mutex_init(&data->heap->mutex, NULL);
     while (++i < data->number_of_coders)
     {
         data->heap->node[i].coder = &data->coders[i];

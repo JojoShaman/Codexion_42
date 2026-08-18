@@ -8,8 +8,10 @@ void    output(t_coder *coder, t_status log)
     start = coder->data_all->simulation_start;
     now = get_time(MILLISECOND);
     pthread_mutex_lock(&coder->data_all->write_mutex);
-    if (log == TAKING_DONGLE)
-        fprintf(stdout, "%lld %d has taken a dongle\n", now - start, coder->id);
+    if (log == TOOK_FIRST)
+        fprintf(stdout, "%lld %d has taken dongle D%d\n", now - start, coder->id, coder->first_dongle->id);
+    else if (log == TOOK_SECOND)
+        fprintf(stdout, "%lld %d has taken dongle D%d\n", now - start, coder->id, coder->second_dongle->id);
     else if (log == COMPILING)
         fprintf(stdout, "%lld %d is compiling\n", now - start, coder->id);
     else if (log == DEBUGGING)

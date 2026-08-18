@@ -2,13 +2,13 @@
 
 void    heapify(t_heap *arr, int i)
 {
-    t_heap_node     *tmp;
+    t_heap_node     tmp;
     int     parent;
     int     child1;
     int     child2;
     int     size;
 
-    tmp = NULL;
+    tmp = arr->node[i];
     parent = i;
     child1 = 2 * i + 1;
     child2 = 2 * i + 2;
@@ -22,9 +22,9 @@ void    heapify(t_heap *arr, int i)
         parent = child2;
     if (parent != i)
     {
-        tmp = &arr->node[i];
+        tmp = arr->node[i];
         arr->node[i] = arr->node[parent];
-        arr->node[parent] = *tmp;
+        arr->node[parent] = tmp;
         arr->node[parent].coder->heap_index = parent;
         arr->node[i].coder->heap_index = i;
         heapify(arr, parent);

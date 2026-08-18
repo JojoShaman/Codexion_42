@@ -9,6 +9,9 @@ void    init_dongle(t_data *data)
     while (++i < data->number_of_coders)
     {
         data->dongles[i].id = i;
+        data->dongles[i].last_release = 0;
+        data->dongles[i].heap = data->heap;
+        data->dongles[i].taken = false;
         pthread_cond_init(&data->dongles[i].cond, NULL);
         pthread_mutex_init(&data->dongles[i].mutex, NULL);
     }
@@ -50,8 +53,10 @@ void    init_coders(t_data *data)
         coder->last_compile_time = get_time(MILLISECOND);
         pthread_cond_init(&coder->cond, NULL);
         pthread_mutex_init(&coder->mutex, NULL);
+        pthread_mutex_init(&coder->status_mutex, NULL);
         coder->data_all = data;
         coder->status = WAITING_DONGLE;
+        coder->waiting_for = NULL;
         attribute_dongle(coder, i);
     }
 }
@@ -72,17 +77,23 @@ bool    init_data(t_data *data, char **argv)
     data->simulation_start = get_time(MILLISECOND);
     data->ready = false;
     data->end_of_simulation = false;
+    data->coders_finished = 0;
     data->coders = malloc(data->number_of_coders * sizeof(*data->coders));
     if (!data->coders)
         return 0;
     data->dongles = malloc(data->number_of_coders * sizeof((*data->dongles)));
     if (!data->dongles)
+    {
+        free(data->coders);
         return 0;
+    }
     init_coders(data);
     build_heap(data);
+    init_dongle(data);
     pthread_mutex_init(&data->write_mutex, NULL);
     pthread_mutex_init(&data->end_mutex, NULL);
     pthread_mutex_init(&data->ready_mutex, NULL);
+    pthread_mutex_init(&data->another_mutex, NULL);
     pthread_cond_init(&data->ready_cond, NULL);
     pthread_cond_init(&data->monitor_cond, NULL);
     return 1;

@@ -83,6 +83,5 @@ bool    data_validator(int argc, char **argv)
                 return false;
         }
     }
-
     return true;
 }

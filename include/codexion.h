@@ -46,7 +46,8 @@ typedef enum e_status
     COMPILING,
     DEBUGGING,
     REFACTORING,
-    TAKING_DONGLE,
+    TOOK_FIRST,
+    TOOK_SECOND,
     WAITING_DONGLE,
     BURNED_OUT
 }   t_status;
@@ -62,6 +63,7 @@ struct s_data
     int         time_to_refactor;
     int         number_of_compiles_required;
     int         dongle_cooldown;
+    int         coders_finished;
     bool        ready;
     bool        end_of_simulation;
     t_coder     *coders;
@@ -70,6 +72,7 @@ struct s_data
     t_mtx       end_mutex;
     t_mtx       write_mutex;
     t_mtx       ready_mutex;
+    t_mtx       another_mutex;
     t_cond      ready_cond;
     t_heap      *heap;
     pthread_t   monitor;
@@ -101,9 +104,11 @@ struct s_coder
     t_data      *data_all;
     t_dongle    *first_dongle;
     t_dongle    *second_dongle;
+    t_dongle    *waiting_for;
     t_cond      cond;
     pthread_t   thread;
     t_mtx       mutex;
+    t_mtx       status_mutex;
     t_status    status;
 };
 
@@ -128,4 +133,5 @@ void    dongle_cooldown(t_dongle *dongle, t_data *data);
 void    heapify(t_heap *arr, int i);
 void    output(t_coder *coder, t_status log);
 void    run_thread(t_data *data);
+void    cleanup(t_data *data);
 #endif
