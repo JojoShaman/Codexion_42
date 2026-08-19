@@ -137,4 +137,8 @@ void	output(t_coder *coder, t_status log);
 void	run_thread(t_data *data);
 void	cleanup(t_data *data);
 void	sift_up(t_heap *heap, int i);
+void	init_coders(t_data *data);
+void	init_dongle(t_data *data);
+void	attribute_dongle(t_coder *coder, int position);
+
 #endif
