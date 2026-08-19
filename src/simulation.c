@@ -30,6 +30,32 @@ void    set_long(t_mtx *mutex, long long *dir, long long value)
     pthread_mutex_unlock(mutex);
 }
 
+void    set_status(t_coder *coder, t_status log, bool display)
+{
+    pthread_mutex_lock(&coder->status_mutex);
+    coder->status = log;
+    if (display)
+        output(coder, log);
+    pthread_mutex_unlock(&coder->status_mutex);
+}
+
+void    set_waiting_for(t_mtx *mutex, t_dongle *dest, t_dongle *dongle)
+{
+    pthread_mutex_lock(mutex);
+    dest = dongle;
+    pthread_mutex_unlock(mutex);
+}
+
+t_dongle    *get_waiting_for(t_mtx *mutex, t_dongle *dongle)
+{
+    t_dongle    *ret;
+
+    pthread_mutex_lock(mutex);
+    ret = dongle;
+    pthread_mutex_unlock(mutex);
+    return (ret);
+}
+
 t_coder *first_arrived(t_dongle *dongle)
 {
     bool    left_wait;
@@ -38,8 +64,8 @@ t_coder *first_arrived(t_dongle *dongle)
     long long   right_arrival;
     t_coder     *first;
 
-    left_wait = (dongle->left->waiting_for == dongle);
-    right_wait = (dongle->right->waiting_for == dongle);
+    left_wait = (get_waiting_for(&dongle->left->status_mutex, dongle->left->waiting_for) == dongle);
+    right_wait = (get_waiting_for(&dongle->right->status_mutex, dongle->right->waiting_for) == dongle);
     left_arrival = get_long(
         &dongle->left->read_long_mutex, &dongle->left->arrival_time);
     right_arrival = get_long(
@@ -58,25 +84,16 @@ t_coder *first_arrived(t_dongle *dongle)
     return (first);
 }
 
-void    set_status(t_coder *coder, t_status log, bool display)
-{
-    pthread_mutex_lock(&coder->status_mutex);
-    coder->status = log;
-    if (display)
-        output(coder, log);
-    pthread_mutex_unlock(&coder->status_mutex);
-}
-
 bool    dongle_acquire(t_dongle *dongle, t_coder *coder)
 {
     pthread_mutex_lock(&dongle->mutex);
-    coder->waiting_for = dongle;
+    set_waiting_for(&coder->status_mutex, coder->waiting_for, dongle);
     set_status(coder, WAITING_DONGLE, false);
     while (dongle->taken && !is_end(coder->data_all))
         pthread_cond_wait(&dongle->cond, &dongle->mutex);
     if (is_end(coder->data_all))
     {
-        coder->waiting_for = NULL;
+        set_waiting_for(&coder->status_mutex, coder->waiting_for, NULL);
         pthread_mutex_unlock(&dongle->mutex);
         return (false);
     }
@@ -87,12 +104,12 @@ bool    dongle_acquire(t_dongle *dongle, t_coder *coder)
         pthread_cond_wait(&dongle->cond, &dongle->mutex);
     if (is_end(coder->data_all))
     {
-        coder->waiting_for = NULL;
+        set_waiting_for(&coder->status_mutex, coder->waiting_for, NULL);
         pthread_mutex_unlock(&dongle->mutex);
         return (false);
     }
     dongle->taken = true;
-    coder->waiting_for = NULL;
+    set_waiting_for(&coder->status_mutex, coder->waiting_for, NULL);
     pthread_mutex_unlock(&dongle->mutex);
     return (true);
 }
