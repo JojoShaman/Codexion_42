@@ -136,4 +136,5 @@ void    heapify(t_heap *arr, int i);
 void    output(t_coder *coder, t_status log);
 void    run_thread(t_data *data);
 void    cleanup(t_data *data);
+void    sift_up(t_heap *heap, int i);
 #endif
