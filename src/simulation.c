@@ -1,4 +1,5 @@
 #include "../include/codexion.h"
+#include <pthread.h>
 
 bool    is_end(t_data *data)
 {
@@ -70,6 +71,36 @@ t_coder *first_arrived(t_dongle *dongle)
     return (first);
 }
 
+t_coder *shortest_deadline(t_dongle *dongle)
+{
+    long long   right_deadline;
+    long long   left_deadline;
+    bool    left_wait;
+    bool    right_wait;
+
+
+    pthread_mutex_lock(&dongle->right->status_mutex);
+    right_wait = (dongle->right->waiting_for == dongle);
+    pthread_mutex_unlock(&dongle->right->status_mutex);
+    pthread_mutex_lock(&dongle->left->status_mutex);
+    left_wait = (dongle->left->waiting_for == dongle);
+    pthread_mutex_unlock(&dongle->left->status_mutex);
+    pthread_mutex_lock(&dongle->heap->mutex);
+    right_deadline = dongle->heap->node[dongle->right->heap_index].deadline;
+    left_deadline = dongle->heap->node[dongle->left->heap_index].deadline;
+    pthread_mutex_unlock(&dongle->heap->mutex);
+    if (right_wait && left_wait)
+    {
+        if (right_deadline < left_deadline)
+            return (dongle->right);
+        else
+            return (dongle->left);
+    }
+    else if (right_wait && !left_wait)
+        return (dongle->right);
+    return (dongle->left);
+}
+
 bool    dongle_acquire(t_dongle *dongle, t_coder *coder)
 {
     pthread_mutex_lock(&dongle->mutex);
@@ -90,8 +121,18 @@ bool    dongle_acquire(t_dongle *dongle, t_coder *coder)
     if (get_time(MILLISECOND) < dongle->last_release +
             coder->data_all->dongle_cooldown)
         dongle_cooldown(dongle, coder->data_all);
-    while (coder != first_arrived(dongle) && !is_end(coder->data_all))
-        pthread_cond_wait(&dongle->cond, &dongle->mutex);
+    if (coder->data_all->scheduler == FIFO)
+    {
+        // fprintf(stderr, "[DEBUG]: coder %d is using FIFO scheduler", coder->id);
+        while (coder != first_arrived(dongle) && !is_end(coder->data_all))
+            pthread_cond_wait(&dongle->cond, &dongle->mutex);
+    }
+    else
+    {
+        // fprintf(stderr, "[DEBUG]: coder %d is using EDF scheduler", coder->id);
+        while (coder != shortest_deadline(dongle) && !is_end(coder->data_all))
+            pthread_cond_wait(&dongle->cond, &dongle->mutex);
+    }
     if (is_end(coder->data_all))
     {
         pthread_mutex_lock(&coder->status_mutex);
@@ -125,6 +166,7 @@ void    update_deadline(t_coder *coder)
     heap = coder->data_all->heap;
     deadline_before = heap->node[0].deadline;
     heap->node[coder->heap_index].deadline = last_compile + time_to_burnout;
+    sift_up(heap, coder->heap_index);
     heapify(heap, coder->heap_index);
     deadline_after = heap->node[0].deadline;
     if (deadline_after != deadline_before)
