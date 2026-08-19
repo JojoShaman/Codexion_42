@@ -42,7 +42,7 @@ static bool     free_overflow(char *argv)
     nb = 0;
     while (argv[++i])
     {
-        if (nb > 214748364 || nb == 214748364 && (argv[i] - '0' > 7))
+        if ((nb > 214748364 || nb == 214748364) && (argv[i] - '0' > 7))
         {
             fprintf(stderr, "OVERFLOW DETECTED");
             return false;
