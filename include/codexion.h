@@ -101,12 +101,14 @@ struct s_coder
     int         compile_count;
     long long   last_compile_time;
     long long   arrival_time;
+    bool        finished;
     t_data      *data_all;
     t_dongle    *first_dongle;
     t_dongle    *second_dongle;
     t_dongle    *waiting_for;
     t_cond      cond;
     pthread_t   thread;
+    t_mtx       read_long_mutex;
     t_mtx       mutex;
     t_mtx       status_mutex;
     t_status    status;

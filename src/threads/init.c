@@ -54,9 +54,11 @@ void    init_coders(t_data *data)
         pthread_cond_init(&coder->cond, NULL);
         pthread_mutex_init(&coder->mutex, NULL);
         pthread_mutex_init(&coder->status_mutex, NULL);
+        pthread_mutex_init(&coder->read_long_mutex, NULL);
         coder->data_all = data;
         coder->status = WAITING_DONGLE;
         coder->waiting_for = NULL;
+        coder->finished = false;
         attribute_dongle(coder, i);
     }
 }

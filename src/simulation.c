@@ -1,16 +1,52 @@
 #include "../include/codexion.h"
+#include <pthread.h>
+
+bool    is_end(t_data *data)
+{
+    bool    is_end;
+
+    is_end = false;
+    pthread_mutex_lock(&data->end_mutex);
+    if (data->end_of_simulation)
+        is_end = true;
+    pthread_mutex_unlock(&data->end_mutex);
+    return (is_end);
+}
+
+long long   get_long(t_mtx *mutex, long long *value)
+{
+    long long   ret;
+
+    pthread_mutex_lock(mutex);
+    ret = *value;
+    pthread_mutex_unlock(mutex);
+    return (ret);
+}
+
+void    set_long(t_mtx *mutex, long long *dir, long long value)
+{
+    pthread_mutex_lock(mutex);
+    *dir = value;
+    pthread_mutex_unlock(mutex);
+}
 
 t_coder *first_arrived(t_dongle *dongle)
 {
     bool    left_wait;
     bool    right_wait;
+    long long   left_arrival;
+    long long   right_arrival;
     t_coder     *first;
 
-    left_wait = (dongle->left->status == WAITING_DONGLE && dongle->left->waiting_for == dongle);
-    right_wait = (dongle->right->status == WAITING_DONGLE && dongle->right->waiting_for == dongle);
+    left_wait = (dongle->left->waiting_for == dongle);
+    right_wait = (dongle->right->waiting_for == dongle);
+    left_arrival = get_long(
+        &dongle->left->read_long_mutex, &dongle->left->arrival_time);
+    right_arrival = get_long(
+        &dongle->right->read_long_mutex, &dongle->right->arrival_time);
     if (left_wait && right_wait)
     {
-        if (dongle->left->arrival_time > dongle->right->arrival_time)
+        if (left_arrival > right_arrival)
                 first = dongle->right;
         else
                 first = dongle->left;
@@ -31,21 +67,34 @@ void    set_status(t_coder *coder, t_status log, bool display)
     pthread_mutex_unlock(&coder->status_mutex);
 }
 
-void    dongle_acquire(t_dongle *dongle, t_coder *coder)
+bool    dongle_acquire(t_dongle *dongle, t_coder *coder)
 {
     pthread_mutex_lock(&dongle->mutex);
     coder->waiting_for = dongle;
     set_status(coder, WAITING_DONGLE, false);
-    while (dongle->taken)
+    while (dongle->taken && !is_end(coder->data_all))
         pthread_cond_wait(&dongle->cond, &dongle->mutex);
+    if (is_end(coder->data_all))
+    {
+        coder->waiting_for = NULL;
+        pthread_mutex_unlock(&dongle->mutex);
+        return (false);
+    }
     if (get_time(MILLISECOND) < dongle->last_release +
             coder->data_all->dongle_cooldown)
         dongle_cooldown(dongle, coder->data_all);
-    while (coder != first_arrived(dongle))
+    while (coder != first_arrived(dongle) && !is_end(coder->data_all))
         pthread_cond_wait(&dongle->cond, &dongle->mutex);
+    if (is_end(coder->data_all))
+    {
+        coder->waiting_for = NULL;
+        pthread_mutex_unlock(&dongle->mutex);
+        return (false);
+    }
     dongle->taken = true;
     coder->waiting_for = NULL;
     pthread_mutex_unlock(&dongle->mutex);
+    return (true);
 }
 
 void    update_deadline(t_coder *coder)
@@ -83,10 +132,17 @@ void    dongle_release(t_dongle *dongle)
 
 void    compile(t_coder *coder)
 {
-    coder->arrival_time = get_time(MILLISECOND);
-    dongle_acquire(coder->first_dongle, coder);
+    if (is_end(coder->data_all))
+        return ;
+    set_long(
+        &coder->read_long_mutex,
+        &coder->arrival_time,
+        get_time(MILLISECOND));
+    if (!dongle_acquire(coder->first_dongle, coder))
+        return;
     set_status(coder, TOOK_FIRST, true);
-    dongle_acquire(coder->second_dongle, coder);
+    if (!dongle_acquire(coder->second_dongle, coder))
+        return ;
     set_status(coder, TOOK_SECOND, true);
     coder->last_compile_time = get_time(MILLISECOND);
     update_deadline(coder);
@@ -95,18 +151,6 @@ void    compile(t_coder *coder)
     ft_usleep(coder->data_all->time_to_compile, coder);
     dongle_release(coder->first_dongle);
     dongle_release(coder->second_dongle);
-}
-
-bool    is_end(t_data *data)
-{
-    bool    is_end;
-
-    is_end = false;
-    pthread_mutex_lock(&data->end_mutex);
-    if (data->end_of_simulation)
-        is_end = true;
-    pthread_mutex_unlock(&data->end_mutex);
-    return (is_end);
 }
 
 void    debug(t_coder *coder)
@@ -134,7 +178,12 @@ void    set_end(t_data *data)
     data->end_of_simulation = true;
     pthread_mutex_unlock(&data->end_mutex);
     while (++i < data->number_of_coders)
+    {
         pthread_cond_broadcast(&data->coders[i].cond);
+        pthread_mutex_lock(&data->dongles[i].mutex);
+        pthread_cond_broadcast(&data->dongles[i].cond);
+        pthread_mutex_unlock(&data->dongles[i].mutex);
+    }
 }
 
 void    coder_finished(t_data *data)
@@ -173,6 +222,7 @@ void    *simulate(void *data)
         refacor(coder);
         if (coder->compile_count == coder->data_all->number_of_compiles_required)
         {
+            coder->finished = true;
             coder_finished(coder->data_all);
             break;
         }
@@ -204,7 +254,7 @@ void    *monitoring(void *all_data)
         ts.tv_sec = heap->node[0].deadline / 1000;
         ts.tv_nsec = (heap->node[0].deadline % 1000) * 1000000;
         rt = pthread_cond_timedwait(&data->monitor_cond, &data->heap->mutex, &ts);
-        if (rt == ETIMEDOUT && !is_end(data))
+        if (rt == ETIMEDOUT && !is_end(data) && !heap->node[0].coder->finished)
         {
             set_end(data);
             output(heap->node[0].coder, BURNED_OUT);

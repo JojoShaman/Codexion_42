@@ -10,6 +10,7 @@ void    cleanup(t_data *data)
         pthread_mutex_destroy(&data->coders[i].mutex);
         pthread_cond_destroy(&data->coders[i].cond);
         pthread_mutex_destroy(&data->coders[i].status_mutex);
+        pthread_mutex_destroy(&data->coders[i].read_long_mutex);
         pthread_mutex_destroy(&data->dongles[i].mutex);
         pthread_cond_destroy(&data->dongles[i].cond);
     }
