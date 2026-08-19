@@ -30,3 +30,22 @@ void    heapify(t_heap *arr, int i)
         heapify(arr, parent);
     }
 }
+
+void    sift_up(t_heap *heap, int i)
+{
+    int             parent;
+    t_heap_node     tmp;
+
+    while (i > 0)
+    {
+        parent = (i - 1) / 2;
+        if (heap->node[parent].deadline <= heap->node[i].deadline)
+            break ;
+        tmp = heap->node[i];
+        heap->node[i] = heap->node[parent];
+        heap->node[parent] = tmp;
+        heap->node[i].coder->heap_index = i;
+        heap->node[parent].coder->heap_index = parent;
+        i = parent;
+    }
+}
