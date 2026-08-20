@@ -1,3 +1,14 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                       :::      ::::::::    */
+/*   main.c                                            :+:      :+:    :+:    */
+/*                                                   +:+ +:+         +:+      */
+/*   By: srosu <srosu@student.42belgium.be>        #+#  +:+       +#+         */
+/*                                               +#+#+#+#+#+   +#+            */
+/*   Created: 2026/08/19 19:26:07 by srosu            #+#    #+#              */
+/*   Updated: 2026/08/19 19:26:07 by srosu           ###   ########.fr        */
+/*                                                                            */
+/* ************************************************************************** */
 #include "../include/codexion.h"
 
 int     main(int argc, char **argv)
@@ -12,12 +23,13 @@ int     main(int argc, char **argv)
         free(data);
         return (1);
     }
-    if (!init_data(data, argv))
+    init_data(data, argv);
+    if (!init_simulation(data))
     {
-        fprintf(stderr, "ERROR ALLOCATION");
+        fprintf(stderr, "MALLOC FAILED");
+        free(data);
         return (1);
     }
-    run_thread(data);
     cleanup(data);
     return (0);
 }

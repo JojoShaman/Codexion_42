@@ -4,13 +4,16 @@ CFLAGS = -Wall -Wextra -Werror -pthread
 INCLUDES = -Iheaders
 SRCS = 	src/heap/create.c \
 		src/heap/heap_utils.c \
+		src/threads/display.c \
 		src/threads/init.c \
+		src/threads/monitor.c \
+		src/threads/routine.c \
+		src/threads/scheduling.c \
+		src/threads/time.c \
+		src/threads/utils.c \
 		src/free.c \
-		src/logs.c \
 		src/main.c \
-		src/parsing.c \
-		src/simulation.c \
-		src/utils.c
+		src/parsing.c
 OBJS = ${SRCS:.c=.o}
 
 all: ${NAME}

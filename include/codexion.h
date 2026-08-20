@@ -52,7 +52,8 @@ typedef enum e_status
 	TOOK_FIRST,
 	TOOK_SECOND,
 	WAITING_DONGLE,
-	BURNED_OUT
+	BURNED_OUT,
+	INIT
 }	t_status;
 
 struct s_data
@@ -73,11 +74,11 @@ struct s_data
 	t_dongle	*dongles;
 	pthread_t	monitor;
 	t_scheduler	scheduler;
-	t_cond		ready_cond;
+	t_cond		gate_cond;
 	t_cond		monitor_cond;
-	t_mtx		another_mutex;
-	t_mtx		ready_mutex;
-	t_mtx		write_mutex;
+	t_mtx		finished_mutex;
+	t_mtx		gate_mutex;
+	t_mtx		stdout_mutex;
 	t_mtx		end_mutex;
 };
 
@@ -109,9 +110,7 @@ struct s_coder
 	t_dongle	*second_dongle;
 	t_dongle	*waiting_for;
 	t_cond		cond;
-	t_mtx		read_long_mutex;
 	t_mtx		mutex;
-	t_mtx		status_mutex;
 };
 
 struct s_dongle
@@ -127,18 +126,27 @@ struct s_dongle
 };
 
 bool	data_validator(int argc, char **argv);
-bool	init_data(t_data *data, char **argv);
+void	init_data(t_data *data, char **argv);
 long	get_time(t_time time);
 bool	build_heap(t_data *data);
 void	ft_usleep(int to_sleep, t_coder *coder);
 void	dongle_cooldown(t_dongle *dongle, t_data *data);
 void	heapify(t_heap *arr, int i);
 void	output(t_coder *coder, t_status log);
-void	run_thread(t_data *data);
+void	create_join(t_data *data);
 void	cleanup(t_data *data);
 void	sift_up(t_heap *heap, int i);
-void	init_coders(t_data *data);
-void	init_dongle(t_data *data);
 void	attribute_dongle(t_coder *coder, int position);
-
+bool	is_end(t_data *data);
+void	set_status(t_coder *coder, t_status log, bool display);
+void	set_end(t_data *data);
+bool    reached_compile_target(t_coder *coder);
+long long	get_long(t_mtx *mutex, long long *value);
+bool	is_end(t_data *data);
+bool	dongle_acquire(t_dongle *dongle, t_coder *coder);
+void	dongle_release(t_dongle *dongle);
+void	update_deadline(t_coder *coder);
+void	*monitoring(void *all_data);
+void	*run(void *data);
+bool	init_simulation(t_data *data);
 #endif
