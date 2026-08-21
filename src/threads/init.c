@@ -30,16 +30,13 @@ void	create_join(t_data *data)
 	pthread_join(data->monitor, NULL);
 }
 
-bool	init_dongle(t_data *data)
+void	init_dongle(t_data *data)
 {
 	int	i;
 	int	n;
 
 	i = -1;
 	n = data->number_of_coders;
-	data->dongles = malloc(data->number_of_coders * sizeof(t_dongle));
-	if (!data->dongles)
-		return (false);
 	while (++i < data->number_of_coders)
 	{
 		data->dongles[i].id = i;
@@ -51,18 +48,14 @@ bool	init_dongle(t_data *data)
 		data->dongles[i].left = &data->coders[i];
 		data->dongles[i].right = &data->coders[(i - 1 + n) % n];
 	}
-	return (true);
 }
 
-bool	init_coders(t_data *data)
+void	init_coders(t_data *data)
 {
 	int		i;
 	t_coder	*coder;
 
 	i = -1;
-	data->coders = malloc(data->number_of_coders * sizeof(t_coder));
-	if (!data->coders)
-		return (false);
 	while (++i < data->number_of_coders)
 	{
 		coder = &data->coders[i];
@@ -78,7 +71,16 @@ bool	init_coders(t_data *data)
 		pthread_mutex_init(&coder->mutex, NULL);
 		attribute_dongle(coder, i);
 	}
-	return (true);
+}
+
+void	*safe_malloc(void *data, int size)
+{
+	void	*ret;
+
+	ret = malloc(size * sizeof(*data));
+	if (!ret)
+		return (NULL);
+	return (ret);
 }
 
 bool	init_simulation(t_data *data)
@@ -87,7 +89,13 @@ bool	init_simulation(t_data *data)
 	data->ready = false;
 	data->end_of_simulation = false;
 	data->coders_finished = 0;
-	if (!init_coders(data) || !init_dongle(data) || !build_heap(data))
+	data->coders = safe_malloc(data->coders, data->number_of_coders);
+	data->dongles = safe_malloc(data->dongles, data->number_of_coders);
+	if (!data->coders || !data->dongles)
+		return (false);
+	init_coders(data);
+	init_dongle(data);
+	if (!build_heap(data))
 		return (false);
 	pthread_mutex_init(&data->stdout_mutex, NULL);
 	pthread_mutex_init(&data->end_mutex, NULL);
