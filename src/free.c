@@ -9,6 +9,7 @@
 /*   Updated: 2026/08/19 19:26:07 by srosu           ###   ########.fr        */
 /*                                                                            */
 /* ************************************************************************** */
+
 #include "../include/codexion.h"
 
 static void	destroy(t_data *data)
@@ -18,20 +19,29 @@ static void	destroy(t_data *data)
 	i = -1;
 	while (++i < data->number_of_coders)
 	{
-		pthread_cond_destroy(&data->coders[i].cond);
-		pthread_mutex_destroy(&data->coders[i].mutex);
-		pthread_mutex_destroy(&data->dongles[i].mutex);
-		pthread_cond_destroy(&data->dongles[i].cond);
+		if (data->coders)
+		{
+			pthread_cond_destroy(&data->coders[i].cond);
+			pthread_mutex_destroy(&data->coders[i].mutex);
+		}
+		if (data->dongles)
+		{
+			pthread_mutex_destroy(&data->dongles[i].mutex);
+			pthread_cond_destroy(&data->dongles[i].cond);
+		}
 	}
 }
 
 void	cleanup(t_data *data)
 {
 	destroy(data);
-	if (data->coders)
-		free(data->coders);
-	if (data->dongles)
-		free(data->dongles);
+	if (data->coders || data->dongles)
+	{
+		if (data->coders)
+			free(data->coders);
+		if (data->dongles)
+			free(data->dongles);
+	}
 	if (data->heap)
 	{
 		pthread_mutex_destroy(&data->heap->mutex);
