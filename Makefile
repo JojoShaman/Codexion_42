@@ -8,6 +8,7 @@ SRCS = 	src/heap/create.c \
 		src/threads/init.c \
 		src/threads/monitor.c \
 		src/threads/routine.c \
+		src/threads/scheduling_utils.c \
 		src/threads/scheduling.c \
 		src/threads/time.c \
 		src/threads/utils.c \
