@@ -29,13 +29,16 @@ void	create_join(t_data *data)
 	pthread_join(data->monitor, NULL);
 }
 
-void	init_dongle(t_data *data)
+bool	init_dongle(t_data *data)
 {
 	int	i;
 	int	n;
 
 	i = -1;
 	n = data->number_of_coders;
+	data->dongles = malloc(data->number_of_coders * sizeof(t_dongle));
+	if (!data->dongles)
+		return (false);
 	while (++i < data->number_of_coders)
 	{
 		data->dongles[i].id = i;
@@ -47,14 +50,18 @@ void	init_dongle(t_data *data)
 		data->dongles[i].left = &data->coders[i];
 		data->dongles[i].right = &data->coders[(i - 1 + n) % n];
 	}
+	return (true);
 }
 
-void	init_coders(t_data *data)
+bool	init_coders(t_data *data)
 {
 	int		i;
 	t_coder	*coder;
 
 	i = -1;
+	data->coders = malloc(data->number_of_coders * sizeof(t_coder));
+	if (!data->coders)
+		return (false);
 	while (++i < data->number_of_coders)
 	{
 		coder = &data->coders[i];
