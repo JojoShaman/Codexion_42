@@ -17,7 +17,7 @@ Overall, Codexion is a low-level concurrency problem that requires careful coord
 1. **Threads** (POSIX Threads)
    : a thread is a single flow of execution inside a process, in this project each coder is represented by a thread created using POSIX threads. Inside the operating system, the CPU does not run all threads at the same time. Instead it switches very fast between them using context switching. One thread runs for a short time, then it's paused, and another thread continues.
 
-   All Threads share the same memory space. This means they can access the same data, such as shared counters and shared ressources (dongles). Because of this shared memory space, synchronisation is required to avoid conflicts such as a [^TOCTOU].
+   All Threads share the same memory space. This means they can access the same data, such as shared counters and shared ressources (dongles). Because of this shared memory space, synchronisation is required to avoid conflicts such as a TOCTOU[^TOCTOU].
 
 2. **Shared ressources** (Dongles)
    : Dongles are shared ressources used by coders to compile. Each coder needs two dongles at the same time on order to perform the compiling step.
@@ -39,7 +39,7 @@ One of the core mechanisms of this project is scheduling.
 
 When multiple coders try to acquire the same dongle at the same time, a scheduling
 policy decides who gets it first. This project supports two scheduling policies,
-[^FIFO] and [^EDF], selected at launch through the `scheduler` argument.
+FIFO[^FIFO] and EDF[^EDF], selected at launch through the `scheduler` argument.
 
 The subject requires a heap-based priority queue for scheduling. We implemented
 this requirement, but not for the reason one might expect, and want to explain why.
@@ -292,7 +292,25 @@ so two coders' log lines can never interleave into one corrupted line — the
 timestamp is captured before acquiring the mutex so it reflects the true
 moment of the event rather than however long the thread waited for the lock.
 
+
 ## Ressources
+
+- ["The Dining Philosophers in C: Threads, Race Conditions and Deadlocks"](https://youtu.be/zOpzGHwJ3MU?si=puNrMJNSsaLrQPNF) — Oceano (YouTube)
+- ["Codexion"](https://dev.to/yel-bakk/codexion-4fk8) — Yassir El bakkari (dev.to)
+- ["Thread Synchronization"](https://academy.nordicsemi.com/courses/nrf-connect-sdk-fundamentals/lessons/lesson-8-thread-synchronization/topic/the-need-for-thread-synchronization/) — Nordic Developer Academy
+- ["Multithreading in OS - Different Models"](https://www.geeksforgeeks.org/operating-systems/multithreading-in-operating-system/) — GeeksforGeeks
+- ["Understanding the Fundamentals of Multi-Threading: A Beginner's Guide"](https://medium.com/@anton.baksheiev/understanding-the-fundamentals-of-multi-threading-a-beginners-guide-b6585844a538) — Anton Baksheiev (Medium)
+- ["General Concepts"](https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap04.html) — The Open Group Base Specifications, Issue 7 (POSIX.1-2017)
+- ["POSIX Threads (pthreads) — The Simplest Way to Understand Real Multithreading in C"](https://medium.com/@techdhaba.training/posix-threads-pthreads-the-simplest-way-to-understand-real-multithreading-in-c-c2f591ab7a03) — tech dhaba (Medium)
+- ["Chapter 4: Threads & Concurrency"](https://www.andrew.cmu.edu/course/14-712-s20/applications/ln/14712-l5.pdf) — Carnegie Mellon University, 14-712 course notes
+### AI usage
+
+Claude was used strictly as a conceptual sounding board,
+through a question-driven back-and-forth, never to write code.
+
+It helped clarify threading primitives and heap mechanics, and served as a discussion partner for architecture decisions (heap scope, deadlock prevention, monitor wake-up strategy) and optimization trade-offs. It also assisted in drafting parts of this README, though most of it was written independently.
+
+Every line of code was designed and written by hand, and all debugging was done independently aswell.
 
 [^TOCTOU]:
     Time-Of-Check to Time-Of-Use — a race condition where a value is
@@ -308,6 +326,3 @@ moment of the event rather than however long the thread waited for the lock.
     Earliest Deadline First — the coder closest to its burnout deadline
     (`last_compile_start + time_to_burnout`) is granted access first.
 
-```
-
-```
