@@ -9,6 +9,7 @@
 /*   Updated: 2026/08/19 19:26:07 by srosu           ###   ########.fr        */
 /*                                                                            */
 /* ************************************************************************** */
+
 #include "../include/codexion.h"
 
 static bool	nb_arg_validator(int argc)
@@ -40,12 +41,17 @@ static bool	arg_validator(char *argv)
 	{
 		if (!(argv[i] >= '0' && argv[i] <= '9'))
 		{
-			fprintf(stderr, "USAGE ERROR: arguments should only be numbers");
-			return (false);
-		}
-		if (i > 0 && argv[i - 1] == '-')
-		{
-			fprintf(stderr, "USAGE ERROR: numbers should not be negative");
+			if (argv[i] == '-')
+			{
+				if (argv[i + 1] && argv[i + 1] >= '0' && argv[i + 1] <= '9')
+					fprintf(stderr, "USAGE ERROR: numbers "
+						"should not be negative\n");
+				else
+					fprintf(stderr, "USAGE ERROR: invalid argument\n");
+			}
+			else
+				fprintf(stderr, "USAGE ERROR: arguments should "
+					"only be numbers\n");
 			return (false);
 		}
 	}
@@ -63,7 +69,7 @@ static bool	free_overflow(char *argv)
 	{
 		if ((nb > 214748364 || nb == 214748364) && (argv[i] - '0' > 7))
 		{
-			fprintf(stderr, "OVERFLOW DETECTED");
+			fprintf(stderr, "OVERFLOW DETECTED\n");
 			return (false);
 		}
 		nb = (nb * 10) + argv[i] - '0';
@@ -100,6 +106,12 @@ bool	data_validator(int argc, char **argv)
 			if (!scheduler_validator(argv[i]))
 				return (false);
 		}
+	}
+	if (atoi(argv[1]) <= 1)
+	{
+		fprintf(stderr, "USAGE ERROR: nb_coders cannot "
+			"be less or equal to 1\n");
+		return (false);
 	}
 	return (true);
 }
