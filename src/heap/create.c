@@ -9,6 +9,7 @@
 /*   Updated: 2026/08/19 19:26:07 by srosu           ###   ########.fr        */
 /*                                                                            */
 /* ************************************************************************** */
+
 #include "../../include/codexion.h"
 
 static bool	init_heap(t_data *data)

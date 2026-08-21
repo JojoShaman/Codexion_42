@@ -1,6 +1,18 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                       :::      ::::::::    */
+/*   utils.c                                           :+:      :+:    :+:    */
+/*                                                   +:+ +:+         +:+      */
+/*   By: srosu <srosu@student.42belgium.be>        #+#  +:+       +#+         */
+/*                                               +#+#+#+#+#+   +#+            */
+/*   Created: 2026/08/19 19:26:07 by srosu            #+#    #+#              */
+/*   Updated: 2026/08/19 19:26:07 by srosu           ###   ########.fr        */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../../include/codexion.h"
 
-bool    reached_compile_target(t_coder *coder)
+bool	reached_compile_target(t_coder *coder)
 {
 	bool	ret;
 
@@ -14,7 +26,7 @@ bool    reached_compile_target(t_coder *coder)
 
 long long	get_long(t_mtx *mutex, long long *value)
 {
-	long long   ret;
+	long long	ret;
 
 	pthread_mutex_lock(mutex);
 	ret = *value;
@@ -25,6 +37,7 @@ long long	get_long(t_mtx *mutex, long long *value)
 bool	is_end(t_data *data)
 {
 	bool	is_end;
+
 	is_end = false;
 	pthread_mutex_lock(&data->end_mutex);
 	if (data->end_of_simulation)
@@ -52,9 +65,9 @@ void	set_end(t_data *data)
 	pthread_mutex_unlock(&data->end_mutex);
 	while (++i < data->number_of_coders)
 	{
-		pthread_cond_broadcast(&data->coders[i].cond);
+		pthread_cond_signal(&data->coders[i].cond);
 		pthread_mutex_lock(&data->dongles[i].mutex);
-		pthread_cond_broadcast(&data->dongles[i].cond);
+		pthread_cond_signal(&data->dongles[i].cond);
 		pthread_mutex_unlock(&data->dongles[i].mutex);
 	}
 }
