@@ -85,19 +85,8 @@ bool	init_simulation(t_data *data)
 	data->ready = false;
 	data->end_of_simulation = false;
 	data->coders_finished = 0;
-	data->coders = malloc(data->number_of_coders * sizeof(t_coder));
-	data->dongles = malloc(data->number_of_coders * sizeof(t_dongle));
-	if (!data->coders || !data->dongles)
-	{
-		if (data->coders)
-			free(data->coders);
-		if (data->dongles)
-			free(data->dongles);
+	if (!init_coders(data) || !init_dongle(data) || !build_heap(data))
 		return (false);
-	}
-	init_coders(data);
-	build_heap(data);
-	init_dongle(data);
 	pthread_mutex_init(&data->stdout_mutex, NULL);
 	pthread_mutex_init(&data->end_mutex, NULL);
 	pthread_mutex_init(&data->gate_mutex, NULL);
