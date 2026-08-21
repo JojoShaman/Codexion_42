@@ -9,6 +9,7 @@
 /*   Updated: 2026/08/19 19:26:07 by srosu           ###   ########.fr        */
 /*                                                                            */
 /* ************************************************************************** */
+
 #include "../../include/codexion.h"
 
 void	heapify(t_heap *arr, int i)
@@ -40,46 +41,70 @@ void	heapify(t_heap *arr, int i)
 	}
 }
 
-void    sift_up(t_heap *heap, int i)
+void	sift_up(t_heap *heap, int i)
 {
-    int             parent;
-    t_heap_node     tmp;
+	int			parent;
+	t_heap_node	tmp;
 
-    while (i > 0)
-    {
-        parent = (i - 1) / 2;
-        if (heap->node[parent].deadline <= heap->node[i].deadline)
-            break ;
-        tmp = heap->node[i];
-        heap->node[i] = heap->node[parent];
-        heap->node[parent] = tmp;
-        heap->node[i].coder->heap_index = i;
-        heap->node[parent].coder->heap_index = parent;
-        i = parent;
-    }
+	while (i > 0)
+	{
+		parent = (i - 1) / 2;
+		if (heap->node[parent].deadline <= heap->node[i].deadline)
+			break ;
+		tmp = heap->node[i];
+		heap->node[i] = heap->node[parent];
+		heap->node[parent] = tmp;
+		heap->node[i].coder->heap_index = i;
+		heap->node[parent].coder->heap_index = parent;
+		i = parent;
+	}
+}
+
+void	remove_node(t_coder *coder)
+{
+	int		index;
+	int		last;
+	t_heap	*heap;
+
+	pthread_mutex_lock(&coder->data->heap->mutex);
+	heap = coder->data->heap;
+	index = coder->heap_index;
+	last = heap->size - 1;
+	if (index != last)
+	{
+		heap->node[index] = heap->node[last];
+		heap->node[index].coder->heap_index = index;
+		heap->size--;
+		sift_up(heap, index);
+		heapify(heap, index);
+	}
+	else
+		heap->size--;
+	pthread_cond_signal(&coder->data->monitor_cond);
+	pthread_mutex_unlock(&coder->data->heap->mutex);
 }
 
 void	update_deadline(t_coder *coder)
 {
-	int         time_to_burnout;
-	long long   last_compile;
-	long long   deadline_before;
-	long long   deadline_after;
-	t_heap      *heap;
+	int			time_to_burnout;
+	long long	last_compile;
+	long long	deadline_before;
+	long long	deadline_after;
+	t_heap		*heap;
 
 	heap = NULL;
 	last_compile = coder->last_compile_time;
-	time_to_burnout = coder->data_all->time_to_burnout;
+	time_to_burnout = coder->data->time_to_burnout;
 	deadline_before = 0;
 	deadline_after = 0;
-	pthread_mutex_lock(&coder->data_all->heap->mutex);
-	heap = coder->data_all->heap;
+	pthread_mutex_lock(&coder->data->heap->mutex);
+	heap = coder->data->heap;
 	deadline_before = heap->node[0].deadline;
 	heap->node[coder->heap_index].deadline = last_compile + time_to_burnout;
 	sift_up(heap, coder->heap_index);
 	heapify(heap, coder->heap_index);
 	deadline_after = heap->node[0].deadline;
 	if (deadline_after != deadline_before)
-		pthread_cond_signal(&coder->data_all->monitor_cond);
-	pthread_mutex_unlock(&coder->data_all->heap->mutex);
+		pthread_cond_signal(&coder->data->monitor_cond);
+	pthread_mutex_unlock(&coder->data->heap->mutex);
 }
