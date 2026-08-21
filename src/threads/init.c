@@ -73,24 +73,14 @@ void	init_coders(t_data *data)
 	}
 }
 
-void	*safe_malloc(void *data, int size)
-{
-	void	*ret;
-
-	ret = malloc(size * sizeof(*data));
-	if (!ret)
-		return (NULL);
-	return (ret);
-}
-
 bool	init_simulation(t_data *data)
 {
 	data->simulation_start = get_time(MILLISECOND);
 	data->ready = false;
 	data->end_of_simulation = false;
 	data->coders_finished = 0;
-	data->coders = safe_malloc(data->coders, data->number_of_coders);
-	data->dongles = safe_malloc(data->dongles, data->number_of_coders);
+	data->coders = malloc(data->number_of_coders * sizeof(*data->coders));
+	data->dongles = malloc(data->number_of_coders * sizeof(*data->dongles));
 	if (!data->coders || !data->dongles)
 		return (false);
 	init_coders(data);
