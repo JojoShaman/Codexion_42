@@ -153,7 +153,7 @@ void		remove_node(t_coder *coder);
 t_coder		*first_arrived(t_dongle *dongle);
 t_coder		*shortest_deadline(t_dongle *dongle);
 void		dongle_release(t_dongle *dongle);
-bool		is_waiting(t_mtx *mutex, t_dongle *requested, t_dongle *current);
+bool		is_waiting(t_coder *coder, t_dongle *current);
 t_coder		*winner(long long right, long long left, t_dongle *dongle);
 bool		safe_if_end(t_coder *coder, t_dongle *dongle);
 t_coder		*priority(t_coder *coder, t_dongle *dongle);

@@ -36,10 +36,8 @@ t_coder	*first_arrived(t_dongle *dongle)
 	bool		left_wait;
 	bool		right_wait;
 
-	right_wait = is_waiting(&dongle->right->mutex,
-			dongle->right->waiting_for, dongle);
-	left_wait = is_waiting(&dongle->left->mutex,
-			dongle->left->waiting_for, dongle);
+	right_wait = is_waiting(dongle->right, dongle);
+	left_wait = is_waiting(dongle->left, dongle);
 	left_arrival = get_long(
 			&dongle->left->mutex, &dongle->left->arrival_time);
 	right_arrival = get_long(
@@ -60,10 +58,8 @@ t_coder	*shortest_deadline(t_dongle *dongle)
 	bool		left_wait;
 	bool		right_wait;
 
-	right_wait = is_waiting(&dongle->right->mutex,
-			dongle->right->waiting_for, dongle);
-	left_wait = is_waiting(&dongle->left->mutex,
-			dongle->left->waiting_for, dongle);
+	right_wait = is_waiting(dongle->right, dongle);
+	left_wait = is_waiting(dongle->left, dongle);
 	pthread_mutex_lock(&dongle->heap->mutex);
 	right_deadline = dongle->heap->node[dongle->right->heap_index].deadline;
 	left_deadline = dongle->heap->node[dongle->left->heap_index].deadline;

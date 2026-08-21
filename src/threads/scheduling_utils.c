@@ -21,15 +21,17 @@ void	dongle_release(t_dongle *dongle)
 	pthread_mutex_unlock(&dongle->mutex);
 }
 
-bool	is_waiting(t_mtx *mutex, t_dongle *requested, t_dongle *current)
+bool	is_waiting(t_coder *coder, t_dongle *current)
 {
-	bool	ret;
+	bool		ret;
+	t_dongle	*requested;
 
 	ret = false;
-	pthread_mutex_lock(mutex);
+	pthread_mutex_lock(&coder->mutex);
+	requested = coder->waiting_for;
 	if (requested == current)
 		ret = true;
-	pthread_mutex_unlock(mutex);
+	pthread_mutex_unlock(&coder->mutex);
 	return (ret);
 }
 
